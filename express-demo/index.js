@@ -1,18 +1,41 @@
 const express = require("express");
+const startupDebuger=require('debug')('app:startup')
+const dbDebuger=require('debug')('app:db')
+const morgan = require("morgan");
 const Joi = require("joi");
-const log=require('./logger')
-const auth=require('./auth')
+const config=require('config')
+const log = require("./logger");
+const auth = require("./auth");
 const app = express();
 
-app.use(express.urlencoded({extended:true})); //key and values 
-app.use(express.json()); //json raw
-app.use(express.static('public')) // serve static content
+app.set('view engine','pug');
+app.set('views', './views') //default
 
-//example of middle ware 
+//Configuration
+console.log(`Application name === ${config.get('name')}`)
+console.log(`Mail server ==== ${config.get('mail.host')}`)
+console.log(`Mail password ==== ${config.get('mail.password')}`)
+
+//export on mac set on windows for setting env variables 
+
+//export NODE_ENV=production or set NODE_ENV=production
+if (app.get("env") === "development") {
+  app.use(morgan("tiny"));
+  startupDebuger("morgan enabled");
+}
+
+//bdwork
+dbDebuger("connected to  database");
+
+app.use(express.urlencoded({ extended: true })); //key and values
+app.use(express.json()); //json raw
+app.use(express.static("public")); // serve static content
+
+//example of middle ware
 //this get executed every time we request for api hit
 app.use(log);
 
-app.use(auth)
+app.use(auth);
 
 const courses = [
   { id: 1, name: "course1" },
@@ -21,7 +44,7 @@ const courses = [
   { id: 4, name: "course4" },
 ];
 app.get("/", (req, res) => {
-  res.send("hello world!!!!!");
+  res.render('index',{title:'My express app', message:'Hello'});
 });
 
 app.get("/api/courses", (req, res) => {
